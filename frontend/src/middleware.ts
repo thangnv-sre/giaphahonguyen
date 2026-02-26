@@ -20,6 +20,15 @@ const authRequiredPaths = [
   '/documents', '/fund', '/admin',
 ];
 
+function isProtectedPath(pathname: string): boolean {
+  return authRequiredPaths.some((path) => {
+    if (path === '/') {
+      return pathname === '/';
+    }
+    return pathname === path || pathname.startsWith(`${path}/`);
+  });
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -65,7 +74,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect unauthenticated users from protected pages
-  if (!user && authRequiredPaths.some(path => pathname.startsWith(path))) {
+  if (!user && isProtectedPath(pathname)) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
