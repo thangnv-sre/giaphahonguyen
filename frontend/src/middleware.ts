@@ -98,8 +98,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect authenticated users away from auth pages
-  if (user && publicPaths.some(path => pathname.startsWith(path))) {
+  // Avoid redirect ping-pong on Vercel:
+  // protected route -> /login?redirect=... then auth page -> /
+  // can loop when server-side auth state is temporarily inconsistent.
+  const hasRedirectParam = request.nextUrl.searchParams.has('redirect');
+  if (user && !hasRedirectParam && publicPaths.some(path => pathname.startsWith(path))) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
